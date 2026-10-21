@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Fields — Trifold Menu Mockup</title>
+<style>
+  /* Fields Brand Guidelines p.12 — nothing here carries a colour off that page. */
+  :root{
+    --forest:#283628; --sunshine:#F9E14D; --poppy:#E84A28;
+    --burgundy:#5F2637; --chartreuse:#B4AA4F; --lavender:#BEA8D5; --almond:#F4E9E1;
+
+    --panel-w: 220px;                 /* 3.667 in panel, scaled */
+    --panel-h: 510px;                 /* 8.5 in tall           */
+    --ui:#1f2a1f;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; background:#121a12; color:var(--almond);
+    font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    display:flex; flex-direction:column; overflow:hidden;
+  }
+
+  /* ---------- top bar ---------- */
+  header{
+    display:flex; flex-wrap:wrap; gap:14px 18px; align-items:center;
+    padding:12px 16px 14px; background:var(--ui); border-bottom:1px solid #35452f; z-index:5;
+  }
+  /* Arc and other minimal-chrome browsers keep a window-drag strip along the top edge
+     of the web view. Opt out, and keep the slider off the first row so it can't land
+     in that strip and drag the window instead of the handle. */
+  header, header *{ -webkit-app-region:no-drag; app-region:no-drag; }
+  header h1{font-size:14px; font-weight:600; margin:0 8px 0 0; letter-spacing:.04em; text-transform:uppercase; opacity:.75}
+  .grp{display:flex; gap:6px; align-items:center}
+  .grp label{font-size:11px; white-space:nowrap; text-transform:uppercase; letter-spacing:.06em; opacity:.5}
+  button{
+    background:#2f3d2c; color:var(--almond); border:1px solid #44543d; border-radius:6px;
+    padding:6px 11px; font-size:12px; cursor:pointer;
+  }
+  button:hover{background:#3c4c37}
+  /* Sunshine on Forest measures 9.7:1 — the one place Sunshine carries weight. */
+  button.on{background:var(--sunshine); border-color:var(--sunshine); color:var(--forest); font-weight:600}
+  .grp.slider{order:9; width:100%; gap:12px}
+  input[type=range]{flex:1; min-width:160px; accent-color:var(--sunshine)}
+  .hint{margin-left:auto; font-size:11px; opacity:.45}
+
+  /* ---------- artwork-pending notice ---------- */
+  #notice{
+    display:none; padding:9px 16px; background:var(--burgundy); color:var(--almond);
+    font-size:12px; border-bottom:1px solid #74303f; z-index:4;
+  }
+  #notice.show{display:block}
+  #notice b{color:var(--sunshine); font-weight:600}
+  #notice code{
+    font:11px/1 ui-monospace,SFMono-Regular,Menlo,monospace;
+    background:rgba(0,0,0,.25); padding:2px 5px; border-radius:3px;
+  }
+
+  /* ---------- 3D stage ---------- */
+  #stage{
+    flex:1; position:relative; display:flex; align-items:center; justify-content:center;
+    perspective:2400px; cursor:grab; overflow:hidden;
+    background:radial-gradient(ellipse at 50% 40%, #28362800 0%, #0a0f0a 80%);
+  }
+  #stage.drag{cursor:grabbing}
+  #stage::after{ /* floor shadow */
+    content:""; position:absolute; bottom:9%; left:50%; width:520px; height:44px;
+    transform:translateX(-50%); border-radius:50%;
+    background:radial-gradient(ellipse, rgba(0,0,0,.55), rgba(0,0,0,0) 70%);
+    filter:blur(6px); pointer-events:none;
+  }
+  #sheet{
+    position:relative; width:var(--panel-w); height:var(--panel-h);
+    transform-style:preserve-3d; transition:transform .08s linear;
+  }
+  .panel{
+    position:absolute; top:0; width:var(--panel-w); height:var(--panel-h);
+    transform-style:preserve-3d;
+  }
+  #pMid{left:0}
+  #pLeft{left:calc(var(--panel-w) * -1); transform-origin:100% 50%}
+  #pRight{left:var(--panel-w); transform-origin:0 50%}
+
+  .face{
+    position:absolute; inset:0; backface-visibility:hidden; overflow:hidden;
+    background:#fff; box-shadow:0 0 0 1px rgba(0,0,0,.25);
+  }
+  .face.back{transform:rotateY(180deg)}
+  .face img{width:100%; height:100%; object-fit:cover; display:block; pointer-events:none}
+
+  .tag{   /* small corner pill so it never buries the artwork */
+    position:absolute; top:7px; left:7px; padding:3px 7px; border-radius:4px;
+    background:rgba(18,26,18,.82); color:var(--almond);
+    font-size:9px; letter-spacing:.06em; text-transform:uppercase; white-space:nowrap;
+    opacity:0; transition:opacity .15s; pointer-events:none;
+  }
+  #sheet.labels .tag{opacity:1}
+
+  /* ---------- flat / imposition view ---------- */
+  #flat{flex:1; display:none; overflow:auto; padding:28px; background:#121a12}
+  body.flatmode #stage{display:none}
+  body.flatmode #flat{display:block}
+  #flat h2{font-size:11px; letter-spacing:.12em; text-transform:uppercase; opacity:.5; margin:0 0 8px}
+  .spread{display:flex; margin:0 0 26px; box-shadow:0 6px 24px rgba(0,0,0,.5); width:max-content}
+  .spread .cell{position:relative; width:170px; border-right:1px dashed rgba(249,225,77,.5)}
+  .spread .cell:last-child{border-right:0}
+  .spread .cell img{width:100%; height:394px; object-fit:cover; display:block}
+  .spread .cell span{
+    display:block; padding:6px 4px; background:var(--ui); font-size:9px; text-align:center;
+    letter-spacing:.05em; text-transform:uppercase; opacity:.7;
+  }
+  .note{font-size:12px; opacity:.55; max-width:560px; margin:0 0 22px}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Fields &middot; Trifold Menu</h1>
+
+  <div class="grp slider">
+    <label>Slide to fold / unfold</label>
+    <input id="fold" type="range" min="0" max="1" step="0.005" value="1">
+  </div>
+
+  <div class="grp">
+    <button data-goto="1">Closed</button>
+    <button data-goto="0.55">Cover open</button>
+    <button data-goto="0">Fully open</button>
+    <button id="flip">Flip over</button>
+    <button id="reset">Reset view</button>
+  </div>
+
+  <div class="grp">
+    <button id="labels">Labels</button>
+    <button id="view">Press sheet</button>
+  </div>
+
+  <div class="hint">Drag to rotate &middot; scroll to zoom</div>
+</header>
+
+<div id="notice"></div>
+
+<div id="stage">
+  <div id="sheet">
+    <div class="panel" id="pLeft"></div>
+    <div class="panel" id="pMid"></div>
+    <div class="panel" id="pRight"></div>
+  </div>
+</div>
+
+<div id="flat">
+  <p class="note">How the art sits on the press sheet. The brochure prints on one sheet: the outside spread on
+    the front, the inside spread on the back. Dashed lines are the folds.</p>
+  <h2>Outside of sheet &mdash; front cover on the right</h2>
+  <div class="spread" id="flatOutside"></div>
+  <h2>Inside of sheet &mdash; the full open spread</h2>
+  <div class="spread" id="flatInside"></div>
+</div>
+
+<script>
+/* =========================================================================
+   SWAP ARTWORK HERE.
+   Drop six files into /images with these names and reload - no code change
+   needed. Any format the browser reads works (jpg, png, svg, webp). Point
+   these paths elsewhere if you would rather keep your own filenames.
+
+   Until a file exists, that panel falls back to the matching placeholder in
+   /images/placeholder and the bar under the header says which are missing.
+   ========================================================================= */
+const ART = {
+  outsideLeft:  'images/exterior_01.jpg',   // tuck-in flap
+  outsideMid:   'images/exterior_02.jpg',   // back cover
+  outsideRight: 'images/exterior_03.jpg',   // front cover
+  insideLeft:   'images/interior_01.jpg',   // reverse of the front cover
+  insideMid:    'images/interior_02.jpg',   // reverse of the back cover
+  insideRight:  'images/interior_03.jpg',   // reverse of the tuck flap
+};
+
+/* Stand-in drawn in brand colour, one per panel. Derived from the ART path so
+   renaming a panel above only means renaming its placeholder to match. */
+const placeholderFor = key => {
+  const file = ART[key].split('/').pop().replace(/\.[^.]+$/, '');
+  return 'images/placeholder/' + file + '.svg';
+};
+
+/* Which artwork lands on which physical face of the folded piece.
+   Reverse of the RIGHT outside panel is the LEFT inside panel, etc. */
+const PANELS = [
+  { el:'pLeft',  front:'insideLeft',  frontTag:'Inside 1',
+                 back:'outsideRight', backTag:'Front cover' },
+  { el:'pMid',   front:'insideMid',   frontTag:'Inside 2',
+                 back:'outsideMid',   backTag:'Back cover' },
+  { el:'pRight', front:'insideRight', frontTag:'Inside 3',
+                 back:'outsideLeft',  backTag:'Tuck flap' },
+];
+
+/* ---------- artwork loading, with placeholder fallback ---------- */
+const missing = new Set();
+const noticeEl = document.getElementById('notice');
+
+function renderNotice(){
+  if (!missing.size){ noticeEl.classList.remove('show'); return; }
+  // Panel order, not the order the 404s happened to come back in.
+  const files = Object.keys(ART).filter(k => missing.has(k))
+                      .map(k => '<code>' + ART[k] + '</code>').join(' ');
+  noticeEl.innerHTML =
+    '<b>Placeholder artwork</b> &mdash; ' + missing.size +
+    ' of 6 panels not found. Add ' + files + ' and reload.';
+  noticeEl.classList.add('show');
+}
+
+function addImg(key, img){
+  img.addEventListener('error', () => {
+    if (img.dataset.fellBack) return;      // placeholder itself failed - leave it
+    img.dataset.fellBack = '1';
+    img.src = placeholderFor(key);
+    missing.add(key);
+    renderNotice();
+  });
+  img.src = ART[key];
+}
+
+/* ---------- build the faces ---------- */
+for (const p of PANELS){
+  const host = document.getElementById(p.el);
+  for (const side of ['front','back']){
+    const face = document.createElement('div');
+    face.className = 'face ' + side;
+    const img = document.createElement('img');
+    addImg(p[side], img);
+    const tag = document.createElement('div');
+    tag.className = 'tag';
+    tag.innerHTML = p[side + 'Tag'];
+    face.append(img, tag);
+    host.appendChild(face);
+  }
+}
+
+/* ---------- folding ---------- */
+const sheet = document.getElementById('sheet');
+const foldEl = document.getElementById('fold');
+let t = 1;                 // 0 = flat open, 1 = fully folded
+
+const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+
+function applyFold(){
+  // flap tucks in first, cover closes over it
+  const flap  = clamp01(t / 0.55);
+  const cover = clamp01((t - 0.45) / 0.55);
+
+  document.getElementById('pRight').style.transform =
+    `rotateY(${-180 * flap}deg) translateZ(${-1.5 * flap}px)`;
+  document.getElementById('pLeft').style.transform =
+    `rotateY(${180 * cover}deg) translateZ(${-3 * cover}px)`;
+
+  // How much room the piece takes up right now, measured in panel widths from the
+  // middle panel's left edge. A swung-out wing projects cos(angle) of its width;
+  // once it passes 90 deg it lies over the middle panel and adds nothing.
+  const xMin = -Math.max(0, Math.cos(Math.PI * cover));
+  const xMax = 1 + Math.max(0, Math.cos(Math.PI * flap));
+  spanned = xMax - xMin;
+  centerShift = 0.5 - (xMin + xMax) / 2;   // recentre: the wings are not symmetrical
+
+  fitZoom();
+  applyView();
+}
+
+/* ---------- orbit / zoom ---------- */
+let rx = -12, ry = -28, zoom = 1, userZoom = 1, spanned = 1, centerShift = 0, shiftPx = 0;
+const stage = document.getElementById('stage');
+
+function fitZoom(){
+  const css = getComputedStyle(document.documentElement);
+  const pw = parseFloat(css.getPropertyValue('--panel-w'));
+  const ph = parseFloat(css.getPropertyValue('--panel-h'));
+  const fit = Math.min((stage.clientWidth  - 40) / (pw * spanned),
+                       (stage.clientHeight - 40) / ph,
+                       1.15);
+  zoom = fit * userZoom;
+  shiftPx = centerShift * pw * zoom;
+}
+function applyView(){
+  sheet.style.transform = `translateX(${shiftPx}px) ` +
+    `scale3d(${zoom},${zoom},${zoom}) rotateX(${rx}deg) rotateY(${ry}deg)`;
+}
+
+let dragging = false, lx = 0, ly = 0;
+const down = e => { dragging = true; stage.classList.add('drag'); lx = e.clientX; ly = e.clientY; };
+const move = e => {
+  if (!dragging) return;
+  ry += (e.clientX - lx) * 0.45;
+  rx -= (e.clientY - ly) * 0.35;
+  rx = Math.max(-85, Math.min(85, rx));
+  lx = e.clientX; ly = e.clientY;
+  applyView();
+};
+const up = () => { dragging = false; stage.classList.remove('drag'); };
+
+stage.addEventListener('pointerdown', down);
+window.addEventListener('pointermove', move);
+window.addEventListener('pointerup', up);
+stage.addEventListener('wheel', e => {
+  e.preventDefault();
+  userZoom = Math.max(0.4, Math.min(3, userZoom * (e.deltaY > 0 ? 0.92 : 1.08)));
+  fitZoom();
+  applyView();
+}, { passive:false });
+
+/* ---------- controls ---------- */
+foldEl.addEventListener('input', () => { t = +foldEl.value; applyFold(); });
+
+let anim = 0;
+function animateTo(target){
+  cancelAnimationFrame(anim);
+  const step = () => {
+    t += (target - t) * 0.16;
+    if (Math.abs(target - t) < 0.002) t = target; else anim = requestAnimationFrame(step);
+    foldEl.value = t;
+    applyFold();
+  };
+  step();
+}
+document.querySelectorAll('[data-goto]').forEach(b =>
+  b.addEventListener('click', () => animateTo(+b.dataset.goto)));
+
+document.getElementById('flip').addEventListener('click', () => { ry += 180; applyView(); });
+document.getElementById('reset').addEventListener('click', () => {
+  rx = -12; ry = -28; userZoom = 1; fitZoom(); applyView();
+});
+window.addEventListener('resize', () => { fitZoom(); applyView(); });
+document.getElementById('labels').addEventListener('click', e => {
+  sheet.classList.toggle('labels');
+  e.target.classList.toggle('on', sheet.classList.contains('labels'));
+});
+document.getElementById('view').addEventListener('click', e => {
+  const on = document.body.classList.toggle('flatmode');
+  e.target.classList.toggle('on', on);
+});
+
+/* ---------- flat imposition view ---------- */
+const FLAT = {
+  outside: [['outsideLeft','Tuck flap'],  ['outsideMid','Back cover'], ['outsideRight','Front cover']],
+  inside:  [['insideLeft','Inside 1'],    ['insideMid','Inside 2'],    ['insideRight','Inside 3']],
+};
+for (const [which, rows] of Object.entries(FLAT)){
+  const host = document.getElementById('flat' + which[0].toUpperCase() + which.slice(1));
+  for (const [key, label] of rows){
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    const img = document.createElement('img');
+    addImg(key, img);
+    const span = document.createElement('span');
+    span.innerHTML = label;
+    cell.append(img, span);
+    host.appendChild(cell);
+  }
+}
+
+// touch devices have no scroll wheel
+if (matchMedia('(pointer: coarse)').matches)
+  document.querySelector('.hint').textContent = 'Drag to rotate';
+
+applyFold();   // also fits and applies the view
+</script>
+</body>
+</html>

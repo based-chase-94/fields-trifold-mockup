@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 366 848" width="366" height="848">
+  <rect width="366" height="848" fill="#283628"/>
+  <rect x="18" y="18" width="330" height="812" fill="none" stroke="#E84A28" stroke-width="2" stroke-dasharray="8 8" opacity="0.5"/>
+  <circle cx="183" cy="300" r="58" fill="#F9E14D"/>
+  <text x="183" y="322" font-family="Helvetica,Arial,sans-serif" font-size="56" font-weight="700" fill="#283628" text-anchor="middle">1</text>
+  <text x="183" y="420" font-family="Helvetica,Arial,sans-serif" font-size="27" font-weight="700" fill="#F4E9E1" text-anchor="middle" letter-spacing="1">OUTSIDE LEFT</text>
+  <text x="183" y="456" font-family="Helvetica,Arial,sans-serif" font-size="17" fill="#F4E9E1" text-anchor="middle" opacity="0.7">Tuck-in flap</text>
+  <rect x="103" y="500" width="160" height="3" fill="#E84A28"/>
+  <text x="183" y="562" font-family="Helvetica,Arial,sans-serif" font-size="14" fill="#F9E14D" text-anchor="middle" opacity="0.9">images/exterior_01.jpg</text>
+  <text x="183" y="586" font-family="Helvetica,Arial,sans-serif" font-size="13" fill="#F4E9E1" text-anchor="middle" opacity="0.45">add this file to swap the art</text>
+  <text x="183" y="806" font-family="Helvetica,Arial,sans-serif" font-size="12" fill="#F4E9E1" text-anchor="middle" opacity="0.35">3.667 in x 8.5 in  |  1100 x 2550 px @ 300 dpi</text>
+</svg>
